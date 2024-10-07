@@ -1,1 +1,162 @@
-// Prisma schema will be defined here
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Tenant model
+model Tenant {
+  id                   String        @id @default(uuid())
+  name                 String
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  tenant_users         Tenant_User[]
+  stripeFreeTrialEnd   DateTime?
+  stripeSubscriptionId String?
+  stripeCustomerId     String?       // Added for Stripe customer management
+  onboardingCompleted  Boolean       @default(false)
+  invitations          Invitation[]
+  businessName         String?       // Added for tenant information setup
+  contactEmail         String?       // Added for tenant information setup
+  contactPhone         String?       // Added for tenant information setup
+  address              String?       // Added for tenant information setup
+  industry             String?       // Added for tenant information setup
+  roles                Role[]
+  role_permissions     Role_Permission[]
+  tenant_settings      Tenant_Setting[]
+  mainContactId        String?       // Added for main contact reference
+  mainContact          Tenant_User?  @relation("MainContact", fields: [mainContactId], references: [id])
+}
+
+// Tenant_User model
+model Tenant_User {
+  id                   String   @id @default(uuid())
+  email                String
+  name                 String?
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  role                 Role     @relation(fields: [roleId], references: [id])
+  roleId               String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  isTenantOwner        Boolean  @default(false)
+  onboardingStep       Int      @default(0)
+  isEmailVerified      Boolean  @default(false)
+  lastLoginAt          DateTime?
+  passwordResetToken   String?  // Added for password reset functionality
+  passwordResetExpires DateTime?
+  mainContactFor       Tenant[] @relation("MainContact")
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([roleId, tenantId])
+}
+
+// Role model
+model Role {
+  id               String           @id @default(uuid())
+  name             String
+  description      String?
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id])
+  tenant_users     Tenant_User[]
+  role_permissions Role_Permission[]
+  invitations      Invitation[]
+
+  @@unique([id, tenantId])
+  @@unique([name, tenantId])
+  @@index([tenantId])
+}
+
+// Permission model
+model Permission {
+  id               String           @id @default(uuid())
+  name             String           @unique
+  description      String?
+  role_permissions Role_Permission[]
+}
+
+// Role_Permission model (junction table for many-to-many relationship)
+model Role_Permission {
+  roleId       String
+  permissionId String
+  tenantId     String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  tenant       Tenant     @relation(fields: [tenantId], references: [id])
+
+  @@id([roleId, permissionId, tenantId])
+  @@index([tenantId])
+  @@index([roleId, tenantId])
+}
+
+// Invitation model
+model Invitation {
+  id         String           @id @default(uuid())
+  email      String
+  tenantId   String
+  tenant     Tenant           @relation(fields: [tenantId], references: [id])
+  roleId     String
+  role       Role             @relation(fields: [roleId], references: [id])
+  invitedBy  String
+  status     InvitationStatus
+  token      String           @unique
+  expiresAt  DateTime
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([roleId, tenantId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+// Tenant_Setting model for tenant-specific configurations
+model Tenant_Setting {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+// Audit_Log model for tracking important actions
+model Audit_Log {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// Subscription_Event model for tracking Stripe events
+model Subscription_Event {
+  id               String   @id @default(uuid())
+  tenantId         String
+  stripeEventId    String   @unique
+  stripeEventType  String
+  stripeEventData  Json
+  processedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+}
