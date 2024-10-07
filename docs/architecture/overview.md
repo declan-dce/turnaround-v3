@@ -43,6 +43,19 @@
 8. **Modularity**: Structure the application with modular components and services for easy maintenance and scalability
 9. **Instantaneous Data Serving**: Implement strategies to provide smooth user experience with minimal loading times
 10. **Granular Access Control**: Implement RBAC for route access and a permission system for UI-level interactions
+11. **String Constants**: Use centralized string constants for all labels, messages, and other text content
+
+## String Constants Usage
+Developers should always use constants for strings wherever possible.
+This practice helps avoid manual updates of the same label or message in multiple areas of the codebase.
+Here are some guidelines:
+
+1. Store all string constants in a centralized location, such as a `constants` directory.
+2. Organize constants into logical files (e.g., `generalStrings.ts`, `errorMessages.ts`, `labels.ts`).
+3. Use descriptive names for constants to ensure clarity and ease of use.
+4. Import and use these constants in components and functions instead of hardcoding strings.
+5. For dynamic strings, use template literals with placeholders that can be filled at runtime.
+6. Regularly review and update the constants to ensure they remain relevant and comprehensive.
 
 ## Data Flow
 1. Client-side requests are handled by Next.js App Router
