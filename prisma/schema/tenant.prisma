@@ -1,0 +1,22 @@
+model Tenant {
+  id                   String        @id @default(uuid())
+  name                 String
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  tenant_users         Tenant_User[]
+  stripeFreeTrialEnd   DateTime?
+  stripeSubscriptionId String?
+  stripeCustomerId     String?
+  onboardingCompleted  Boolean       @default(false)
+  invitations          Invitation[]
+  businessName         String?
+  contactEmail         String?
+  contactPhone         String?
+  address              String?
+  industry             String?
+  roles                Role[]
+  role_permissions     Role_Permission[]
+  tenant_settings      Tenant_Setting[]
+  mainContactId        String?
+  mainContact          Tenant_User?  @relation("MainContact", fields: [mainContactId], references: [id])
+}

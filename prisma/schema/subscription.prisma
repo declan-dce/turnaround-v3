@@ -1,0 +1,11 @@
+model Subscription_Event {
+  id               String   @id @default(uuid())
+  tenantId         String
+  stripeEventId    String   @unique
+  stripeEventType  String
+  stripeEventData  Json
+  processedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId])
+}
